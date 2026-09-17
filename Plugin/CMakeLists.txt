@@ -1,5 +1,8 @@
 project(Plugin VERSION 1.0)
 
+set(SOFAPYTHON3_LOAD_BUNDLED_PYTHON false CACHE BOOL "Load bundled Python")
+set(SOFAPYTHON3_BUNDLED_PYTHON_PATH "bin/python" CACHE STRING "Path to bundled Python from SOFA build")
+
 set(HEADER_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/SofaPython3/config.h.in
     ${CMAKE_CURRENT_SOURCE_DIR}/src/SofaPython3/initModule.h

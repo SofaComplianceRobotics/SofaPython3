@@ -23,6 +23,8 @@
 #include <sofa/config.h>
 #include <pybind11/pybind11.h>
 
+#cmakedefine01 SOFAPYTHON3_LOAD_BUNDLED_PYTHON
+#define SOFAPYTHON3_BUNDLED_PYTHON_PATH "@SOFAPYTHON3_BUNDLED_PYTHON_PATH@"
 
 /**
  * This macro HAS to be placed in front of function prototypes containing

@@ -31,6 +31,8 @@ using sofa::helper::system::Plugin;
 #include <sofa/helper/system/FileRepository.h>
 #include <sofa/helper/system/SetDirectory.h>
 #include <sofa/helper/system/FileSystem.h>
+#include <sofa/helper/Utils.h>
+#include <filesystem>
 using sofa::helper::system::FileSystem;
 
 #include <sofa/helper/Utils.h>
@@ -170,6 +172,34 @@ SOFAPYTHON3_API py::module PythonEnvironment::importFromFile(const std::string& 
 
 void PythonEnvironment::Init()
 {
+    if ( !Py_IsInitialized() )
+    {
+        msg_info("SofaPython3") << "Initializing python";
+        if (SOFAPYTHON3_LOAD_BUNDLED_PYTHON) // Locate bundled Python
+        {
+            std::filesystem::path pythonHome = sofa::helper::Utils::getSofaPathTo(SOFAPYTHON3_BUNDLED_PYTHON_PATH);
+
+            PyConfig config;
+            PyConfig_InitPythonConfig(&config);   // isolated-but-not-too-isolated preset
+
+            config.use_environment = 0;           // ignore user's PYTHONHOME/PYTHONPATH
+            config.isolated = 0;                  // keep site module behavior sane
+            config.user_site_directory = 0;       // don't pick up ~/.local/site-packages
+
+            PyConfig_SetString(&config, &config.home, pythonHome.wstring().c_str());
+            py::initialize_interpreter(&config);
+
+            PyConfig_Clear(&config);
+        }
+        else
+        {
+            py::initialize_interpreter();
+        }
+        // the first gil aquisition should happen right after the python interpreter
+        // is initialized.
+        static const PyThreadState* init = PyEval_SaveThread(); (void) init;
+    }
+
     std::string pythonVersion = Py_GetVersion();
     msg_info("SofaPython3") << "Initializing with python version " << pythonVersion;
 
@@ -183,15 +213,6 @@ void PythonEnvironment::Init()
     /// Prevent the python terminal from being buffered, not to miss or mix up traces.
     if( putenv( (char*)"PYTHONUNBUFFERED=1" ) )
         msg_warning("SofaPython3") << "failed to set environment variable PYTHONUNBUFFERED";
-
-    if ( !Py_IsInitialized() )
-    {
-        msg_info("SofaPython3") << "Initializing python";
-        py::initialize_interpreter();
-        // the first gil aquisition should happen right after the python interpreter
-        // is initialized.
-        static const PyThreadState* init = PyEval_SaveThread(); (void) init;
-    }
 
     // Required for sys.path, used in addPythonModulePath().
     executePython([]{ PyRun_SimpleString("import sys");});
