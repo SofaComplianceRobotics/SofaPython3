@@ -182,9 +182,9 @@ void PythonEnvironment::Init()
             PyConfig config;
             PyConfig_InitPythonConfig(&config);   // isolated-but-not-too-isolated preset
 
-            config.use_environment = 0;           // ignore user's PYTHONHOME/PYTHONPATH
-            config.isolated = 0;                  // keep site module behavior sane
+            config.use_environment = 1;           // keep user's PYTHONHOME/PYTHONPATH
             config.user_site_directory = 0;       // don't pick up ~/.local/site-packages
+            config.isolated = 0;                  // keep site module behavior sane
 
             PyConfig_SetString(&config, &config.home, pythonHome.wstring().c_str());
             py::initialize_interpreter(&config);
