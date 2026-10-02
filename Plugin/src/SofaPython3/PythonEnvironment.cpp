@@ -177,14 +177,36 @@ void PythonEnvironment::Init()
         msg_info("SofaPython3") << "Initializing python";
         if (SOFAPYTHON3_LOAD_BUNDLED_PYTHON) // Locate bundled Python
         {
+            auto parseEnv = [](const char* name, int default_value) -> int {
+                const char* raw = std::getenv(name);
+
+                if (raw == nullptr)
+                    return default_value;
+
+                std::string v(raw);
+
+                if (v == "1")
+                    return 1;
+
+                if (v == "0")
+                    return 0;
+
+                return default_value;
+            };
+
             std::filesystem::path pythonHome = sofa::helper::Utils::getSofaPathTo(SOFAPYTHON3_BUNDLED_PYTHON_PATH);
 
             PyConfig config;
             PyConfig_InitPythonConfig(&config);   // isolated-but-not-too-isolated preset
 
-            config.use_environment = 0;           // ignore user's PYTHONHOME/PYTHONPATH
-            config.isolated = 0;                  // keep site module behavior sane
-            config.user_site_directory = 0;       // don't pick up ~/.local/site-packages
+            config.use_environment = parseEnv("SOFA_PYTHON_USE_ENVIRONMENT", 0); // ignore user's PYTHONHOME/PYTHONPATH
+            config.user_site_directory = parseEnv("SOFA_PYTHON_USER_SITE", 0); // don't pick up ~/.local/site-packages
+            config.safe_path = parseEnv("SOFA_PYTHON_SAFE_PATH", 0); // keep site module behavior sane
+
+            msg_info("SofaPython3") << "Using bundled Python with config: ";
+            msg_info("SofaPython3") << "SOFA_PYTHON_USE_ENVIRONMENT: " << config.use_environment;
+            msg_info("SofaPython3") << "SOFA_PYTHON_USER_SITE: " << config.user_site_directory;
+            msg_info("SofaPython3") << "SOFA_PYTHON_SAFE_PATH: " << config.safe_path;
 
             PyConfig_SetString(&config, &config.home, pythonHome.wstring().c_str());
             py::initialize_interpreter(&config);
